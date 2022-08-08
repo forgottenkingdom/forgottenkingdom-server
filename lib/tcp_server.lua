@@ -96,7 +96,8 @@ function TcpServer:createSocket()
 end
 
 function TcpServer:_listen()
-	self.socket:bind("*", self.port)
+	local status, err = self.socket:bind("*", self.port)
+	print(status, err)
 	self.socket:listen(5)
 end
 
