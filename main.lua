@@ -148,7 +148,7 @@ _G.Server.Tcp.callbacks.recv = function (data, clientid)
         _G.Server.Tcp:send(_G.bitser.dumps({
            id = "world_load",
            world = _G.RealmWorld:toNbt()
-        }))
+        }), clientid)
     elseif packet.id == "disconnection" then
         _G.Server.Clients[packet.uuid].tcp = nil
         print("[TCP][".. packet.uuid .."]: disconnected")

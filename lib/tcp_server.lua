@@ -42,6 +42,7 @@ function TcpServer:update(dt)
 	-- Start handling messages.
 	local data, clientid = self:receive()
 	while data do
+		print("data", data)
 		local hs, conn = data:match("^(.+)([%+%-])\n?$")
 		if hs == self.handshake and conn == "+" then
 			-- If we already knew the client, ignore.
@@ -97,8 +98,9 @@ end
 
 function TcpServer:_listen()
 	local status, err = self.socket:bind("*", self.port)
-	print(status, err)
-	self.socket:listen(5)
+	print("bind", status, err)	
+	local status, err = self.socket:listen(5)
+	print("listen", status, err)
 end
 
 function TcpServer:send(data, clientid)
