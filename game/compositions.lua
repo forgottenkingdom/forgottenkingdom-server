@@ -5,7 +5,6 @@ return {
         "Dimension", -- { width, height }
         "Hand", -- { hand = Item = { onActivate } }
         "Eye", -- { viewDistance }
-        "Brain", -- Task evenement / action 
         "Intelligence", -- { intelligence }
         "Force", -- { force }
         "Speed", -- { speed, maxSpeed }

@@ -8,6 +8,18 @@ _G.entitiesDir  = _G.gameDir .. "entities."
 _G.systemsDir   = _G.gameDir .. "systems."
 _G.worldsDir   = _G.gameDir .. "worlds."
 
+local redis = require("lib.redis")
+-- print(redis)
+_G.RedisClient = redis.connect('127.0.0.1', 6379)
+-- local pingresponse = _G.RedisClient:ping()
+-- if not pingresponse then
+--     love.event.quit()
+-- end
+-- -- local response = _G.RedisClient:hset('worlds:test', 14, "{\"colour\":\"blue\"}")
+-- -- print(response)
+-- local ares = _G.RedisClient:hget('users', 14)
+-- print(ares)
+
 local random = math.random
 _G.uuid = function ()
     local template ='xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'
@@ -53,27 +65,34 @@ _G.RealmWorld = require(_G.worldsDir .. "world-realm"):new()
 local PlayerEntity = require(_G.entitiesDir .. "entity-player")
 local ProjectileEntity = require(_G.entitiesDir .. "entity-projectile")
 
-_G.Server.Tcp:listen(8080)
-_G.Server.Udp:listen(8080)
-
 _G.Server.Tcp.handshake = handshake
 _G.Server.Udp.handshake = handshake
+
+function love.load(arg)
+    for k, v in pairs(arg) do
+        print(k, v)
+        if k == 1 then
+            _G.Server.Tcp:listen(v)
+            _G.Server.Udp:listen(v)
+        end
+    end
+end
 
 _G.Server.Udp.callbacks.recv = function (data, clientid)
     -- print("[".. tostring(clientid) .. "]: " .. packet.id)
     local packet = bitser.loads(data)
 
     if packet.id == "connection" then
-        if type(_G.Server.Clients[packet.uuid]) ~= "table" then
-            _G.Server.Clients[packet.uuid] = {}
-            _G.Server.Clients[packet.uuid].udp = clientid
+        if type(_G.Server.Clients[packet.data.email]) ~= "table" then
+            _G.Server.Clients[packet.data.email] = {}
+            _G.Server.Clients[packet.data.email].udp = clientid
         else
-            _G.Server.Clients[packet.uuid].udp = clientid
+            _G.Server.Clients[packet.data.email].udp = clientid
         end
-        print("[UDP][".. packet.uuid .."]: connected")
+        print("[UDP][".. packet.data.email .."]: connected")
     elseif packet.id == "disconnection" then
-        _G.Server.Clients[packet.uuid].udp = nil
-        print("[UDP][".. packet.uuid .."]: disconnected")
+        _G.Server.Clients[packet.data.email].udp = nil
+        print("[UDP][".. packet.data.email .."]: disconnected")
     elseif packet.id == "player_move" then
         local uid = _G.Server:getClientByUdp(clientid)
         local entity = _G.RealmWorld:getEntityById(uid)
@@ -127,6 +146,9 @@ end
 
 _G.Server.Udp.callbacks.connect = function (clientid)
     print("[UDP][".. tostring(clientid) .. "]: connected")
+    _G.Server.Udp:send(_G.bitser.dumps({
+        id = "request_player",
+     }), clientid)
 end
 
 _G.Server.Udp.callbacks.disconnect = function (clientid)
@@ -136,22 +158,49 @@ end
 
 _G.Server.Tcp.callbacks.recv = function (data, clientid)
     local packet = _G.bitser.loads(data)
-    print(packet.id)
     if packet.id == "connection" then
-        if type(_G.Server.Clients[packet.uuid]) ~= "table" then
-            _G.Server.Clients[packet.uuid] = {}
-            _G.Server.Clients[packet.uuid].tcp = clientid
+        if type(_G.Server.Clients[packet.data.email]) ~= "table" then
+            _G.Server.Clients[packet.data.email] = {}
+            _G.Server.Clients[packet.data.email].tcp = clientid
         else
-            _G.Server.Clients[packet.uuid].tcp = clientid
+            _G.Server.Clients[packet.data.email].tcp = clientid
         end
-        print("[TCP][".. packet.uuid .."]: connected")
+        print(packet.data.characterName)
+        print("[TCP][".. packet.data.email .."]: connected")
+        local character = _G.RedisClient:hget("characters:"..packet.data.characterName, "data")
+        local characterData = JSON:decode(character)
+        print(character)
+        if characterData then
+            local entity = RealmWorld:getEntityById(packet.data.email)
+            if not entity then
+                _G.RealmWorld:addEntity(PlayerEntity:new(packet.data.email, {
+                    position = { x = 100, y = 100 },
+                    orientation = 0,
+                    dimension = { width = 32, height = 32 },
+                    hand = nil,
+                    viewDistance = 500,
+                    intelligence = 10,
+                    force = characterData.force,
+                    speed = characterData.speed,
+                    agility = characterData.agility,
+                    life = characterData.life,
+                    fame = 0,
+                    shield = 100,
+                    wallet = 100,
+                    clan = { name = characterData.clan},
+                    quest = nil,
+                    name = characterData.name
+                }))
+            end
+        end
         _G.Server.Tcp:send(_G.bitser.dumps({
            id = "world_load",
            world = _G.RealmWorld:toNbt()
         }), clientid)
     elseif packet.id == "disconnection" then
-        _G.Server.Clients[packet.uuid].tcp = nil
-        print("[TCP][".. packet.uuid .."]: disconnected")
+        -- TODO: Delete token in redis
+        _G.Server.Clients[packet.data.email].tcp = nil
+        print("[TCP][".. packet.data.email .."]: disconnected")
     elseif packet.id == "request_player_entity" then
         local clans = { "alliance", "horde", "steampunk" }
         for k, v in pairs(_G.Server.Clients) do
@@ -178,6 +227,26 @@ _G.Server.Tcp.callbacks.recv = function (data, clientid)
                 }))
                 end
             end 
+        end
+    elseif packet.id == "join_world" then
+        local serverWorld = _G.RedisClient:hgetall("worlds:".. packet.data.name)
+        -- if #serverWorld < 1 then
+        --     _G.Server.Tcp:send(_G.bitser.dumps({
+        --         id = "join_world",
+        --         status = 404
+        --     }))
+        -- else
+            _G.Server.Tcp:send(_G.bitser.dumps({
+                id = "join_world",
+                status = 200,
+                server = {
+                    ip = serverWorld.ip,
+                    port = serverWorld.port
+                }
+            }), clientid)
+        -- end
+        for k, v in pairs(serverWorld) do
+            print(k, v)
         end
     end
 end

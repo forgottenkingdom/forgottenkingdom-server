@@ -18,7 +18,7 @@ function NatureSystem:initialize( world )
 end
 
 function NatureSystem:update(dt)
-    local characters = self.world:getEntitiesWithStrict(Compositions.Character)
+    local characters = self.world:getEntitiesWithAtLeast(Compositions.Character)
 
     if #characters < self.limitOfMonster then
         for k, v in pairs(_G.DB.Entities) do

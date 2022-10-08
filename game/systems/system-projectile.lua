@@ -187,7 +187,7 @@ function ProjectileSystem:update(dt)
             
             local ownerEntity = self.world:getEntityById(bOwner);
             local ownerClan = ownerEntity:getComponent("Clan")
-            if bOwner ~= char.id and ownerClan.clanName ~= pClan.clanName then -- check if he is same clan of owner
+            if bOwner ~= char.id or ownerClan.clanName ~= pClan.clanName then -- check if he is same clan of owner
                 if pShield then
                     if pShield.activated and pShield.armor > 0 then
                         local sPos =  { x = pPos.x + 16 + 32 * math.cos(pRot), y = pPos.y + 16 + 32 * math.sin(pRot) }
@@ -212,6 +212,7 @@ function ProjectileSystem:update(dt)
                         { x = bPos.x, y = bPos.y, width = bDim.width, height = bDim.height, currRotation = orientation},
                         { x = pPos.x, y = pPos.y, width = pDim.width, height = pDim.height, currRotation = pRot}
                     ) then
+                        print("dzadaz")
                         pLife.life = pLife.life - bForce
 
                         local found = nil
@@ -224,6 +225,23 @@ function ProjectileSystem:update(dt)
 
                         v.markDestroy = true
                     end
+                end
+                if detectCollision(
+                    { x = bPos.x, y = bPos.y, width = bDim.width, height = bDim.height, currRotation = orientation},
+                    { x = pPos.x, y = pPos.y, width = pDim.width, height = pDim.height, currRotation = pRot}
+                ) then
+                    print("dzadaz")
+                    pLife.life = pLife.life - bForce
+
+                    local found = nil
+                    for i, attacker in ipairs(char.attackers) do
+                        if attacker == bOwner then found = v end
+                    end
+                    if found == nil then
+                        table.insert(char.attackers, #char.attackers + 1, bOwner)
+                    end
+
+                    v.markDestroy = true
                 end
             end
         end

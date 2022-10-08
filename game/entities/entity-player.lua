@@ -22,6 +22,7 @@ function PlayerEntity:initialize( id, data)
         Components.Shield:new( data.shield ),
         Components.Wallet:new( data.wallet ),
         Components.Clan:new( data.clan.name, data.clan.fame ),
+        Components.Player:new(),
         Components.Quest:new( data.quest ),
         Components.Name:new( data.name )
     })

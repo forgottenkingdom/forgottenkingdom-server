@@ -15,6 +15,11 @@ function World:update(dt)
     for i, v in ipairs(self.systems) do
         v:update(dt)
     end
+
+    _G.Server.Udp:send(_G.bitser.dumps({
+        id = "world_update",
+        worldData = self:toNbt()
+    }))
 end
 
 function World:addEntity( entity )

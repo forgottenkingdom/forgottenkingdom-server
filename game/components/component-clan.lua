@@ -5,7 +5,7 @@ ClanComponent.static.client = true
 
 function ClanComponent:initialize(name, fame)
     self.clanName = name
-    self.clanFame = fame
+    self.clanFame = fame or 0
 end
 
 return ClanComponent
