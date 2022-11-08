@@ -25,6 +25,7 @@ function PlayerEntity:initialize( id, data)
         Components.Player:new(),
         Components.Quest:new( data.quest ),
         Components.Name:new( data.name )
+        Components.Texture:new( data.texture)
     })
     self.shootInterval = 0
     self.attackers = {}

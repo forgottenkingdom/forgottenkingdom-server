@@ -69,11 +69,11 @@ _G.Server.Tcp.handshake = handshake
 _G.Server.Udp.handshake = handshake
 
 function love.load(arg)
+    _G.Server.Tcp:listen(8082)
+    _G.Server.Udp:listen(8082)
     for k, v in pairs(arg) do
         print(k, v)
         if k == 1 then
-            _G.Server.Tcp:listen(v)
-            _G.Server.Udp:listen(v)
         end
     end
 end
@@ -134,10 +134,8 @@ _G.Server.Udp.callbacks.recv = function (data, clientid)
         local uid = _G.Server:getClientByUdp(clientid)
         local entity = _G.RealmWorld:getEntityById(uid)
         if entity then
-            local mouse = packet.data
             local shield = entity:getComponent("Shield")
             if shield then
-                print(shield)
                 shield.activated = packet.data
             end
         end
@@ -189,7 +187,12 @@ _G.Server.Tcp.callbacks.recv = function (data, clientid)
                     wallet = 100,
                     clan = { name = characterData.clan},
                     quest = nil,
-                    name = characterData.name
+                    name = characterData.name,
+                    texture = {
+                        size = 16,
+                        index =1,
+                        name = "tank01"
+                    }
                 }))
             end
         end

@@ -22,4 +22,5 @@ return {
     Shield      = require(_G.componentsDir .. "component-shield"),
     Speed       = require(_G.componentsDir .. "component-speed"),
     Wallet      = require(_G.componentsDir .. "component-wallet"),
+    Texture     = require(_G.componentsDir .. "component-texture")
 }

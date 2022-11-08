@@ -27,6 +27,7 @@ return {
         "Owner"
     },
     Player = {
+        "Grade",
         "Position", -- { x, y }
         "Orientation", -- { orientation }
         "Dimension", -- { width, height }
