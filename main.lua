@@ -165,10 +165,39 @@ _G.Server.Tcp.callbacks.recv = function (data, clientid)
         end
         print(packet.data.characterName)
         print("[TCP][".. packet.data.email .."]: connected")
-        local character = _G.RedisClient:hget("characters:"..packet.data.characterName, "data")
-        local characterData = JSON:decode(character)
-        print(character)
-        if characterData then
+        local characterData = _G.RedisClient:hget("character:"..packet.data.characterName, "data")
+        print(characterData)
+        if characterData ~= nil then
+            local characterDataDecoded = JSON:decode(characterData)
+            if characterDataDecoded then
+                local entity = RealmWorld:getEntityById(packet.data.email)
+                if not entity then
+                    _G.RealmWorld:addEntity(PlayerEntity:new(packet.data.email, {
+                        position = { x = 100, y = 100 },
+                        orientation = 0,
+                        dimension = { width = 32, height = 32 },
+                        hand = nil,
+                        viewDistance = 500,
+                        intelligence = 10,
+                        force = characterDataDecoded.force,
+                        speed = characterDataDecoded.speed,
+                        agility = characterDataDecoded.agility,
+                        life = characterDataDecoded.life,
+                        fame = 0,
+                        shield = 100,
+                        wallet = 100,
+                        clan = { name = characterDataDecoded.clan},
+                        quest = nil,
+                        name = characterDataDecoded.name,
+                        texture = {
+                            size = 16,
+                            index =1,
+                            name = "tank01"
+                        }
+                    }))
+                end
+            end
+        else
             local entity = RealmWorld:getEntityById(packet.data.email)
             if not entity then
                 _G.RealmWorld:addEntity(PlayerEntity:new(packet.data.email, {
@@ -178,16 +207,16 @@ _G.Server.Tcp.callbacks.recv = function (data, clientid)
                     hand = nil,
                     viewDistance = 500,
                     intelligence = 10,
-                    force = characterData.force,
-                    speed = characterData.speed,
-                    agility = characterData.agility,
-                    life = characterData.life,
+                    force = 10,
+                    speed = 10,
+                    agility = 10,
+                    life = 10,
                     fame = 0,
                     shield = 100,
                     wallet = 100,
-                    clan = { name = characterData.clan},
+                    clan = { name = "test" },
                     quest = nil,
-                    name = characterData.name,
+                    name = packet.data.characterName,
                     texture = {
                         size = 16,
                         index =1,

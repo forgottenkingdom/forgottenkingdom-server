@@ -10,8 +10,8 @@ function WorldLimitSystem:update(dt)
     for i, v in ipairs(playerEntities) do
         local vPos = v:getComponent("Position").position
         if vPos.x < 0 or vPos.x > self.world.width or vPos.y > self.world.height or vPos.y < 0 then
-            vPos.x = love.math.random(0, 2000)
-            vPos.y = love.math.random(0, 2000)
+            v:getComponent("Position").position.x = love.math.random(0, 2000)
+            v:getComponent("Position").position.y = love.math.random(0, 2000)
         end
     end
 end
